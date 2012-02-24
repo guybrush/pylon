@@ -1,0 +1,15 @@
+{ "name" : "pylon"
+, "version" : "0.0.0"
+, "description" : "service-registry"
+, "bin" : { "pylon" : "./bin/cli.js" }
+, "scripts" :
+  { "test" : "./node_modules/.bin/mocha test/*.mocha.js -u exports" }
+, "dependencies" :
+  { "eventemitter2" : "0.4.8"
+  , "socketvat"     : "0.0.x"
+  }
+, "bundleDependencies" : [ "socketvat" ]
+, "devDependencies" : { "mocha" : "0.13.x" }
+, "engines" : { "node" : ">=0.6.0" }
+}
+
