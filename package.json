@@ -8,7 +8,6 @@
   { "eventemitter2" : "0.4.8"
   , "socketvat"     : "0.0.x"
   }
-, "bundleDependencies" : [ "socketvat" ]
 , "devDependencies" : { "mocha" : "0.13.x" }
 , "engines" : { "node" : ">=0.6.0" }
 }
