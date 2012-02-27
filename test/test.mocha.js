@@ -1,39 +1,42 @@
 var pylon = require('../pylon')
   , assert = require('assert')
 
+function ee2log(name){return function(){
+  debug((name || '☼')+':',this.event,'→',[].slice.call(arguments))
+}}
+
+function plan(todo,cb) {
+  if (!(this instanceof plan)) return new plan(todo,cb)
+  var self = this
+  self.todo = todo
+  self.did = function(e) {if (--self.todo==0) cb && cb(e)}
+}
+  
 module.exports =
 { 'simple': function(done){
     var port = ~~(Math.random()*50000)+10000
-    var server = pylon.listen(port)
-    var clientA = pylon({foo:function(cb){cb('bar')}}).connect(port,function(rem){
-      var setCount = 0
-      var delCount = 0
-      rem.subscribe('**',function(e,d){
-        console.log(e,d)
-        if (e.split('.')[0] == 'set') setCount++
-        if (e.split('.')[0] == 'del') delCount++
-        if (delCount == 10 && setCount == 10) {
-          done()
-        }
+    var serverP = pylon()
+    var server = serverP.listen(port)
+    var clientP = pylon()
+    clientP.set('x','y')
+    var i = 0
+    var iv = setInterval(function(){
+      clientP.set('foo',i++)
+    },10)
+    var client = clientP.connect(port, function(r,s,id){
+      var p = plan(10,done)
+      var j = 0
+      r.on('set * foo',function(x){
+        console.log(x)
+        if (x<=10) return p.did()
+        client.end()
+        server.close()
+        clearInterval(iv)
       })
-      rem.get('foo',function(e,d){d[rem.id](function(d){
-        assert.equal('bar',d)
-      })})
-      var i = 0
-      var iv = setInterval(function(){
-        var curr = i++
-        if (curr == 9) clearInterval(iv)
-        var clientX = pylon({foo:function(cb){cb('bar'+curr)}}).connect(port,function(rem){
-          rem.subscribe('**',function(e,d){})
-          rem.get('foo',function(e,d){
-            d[rem.id](function(d){
-              assert.equal(d,'bar'+curr)
-              clientX.end()
-            })
-          })
-        })
-      },10)
     })
+    function ee2log(name){return function(){
+      console.log((name || '☼')+':',this.event,'→',[].slice.call(arguments))
+    }}
   }
 }
 

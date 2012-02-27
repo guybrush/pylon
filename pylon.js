@@ -1,23 +1,3 @@
-/*
-
-var pylon = require('pylon')
-var server = pylon.listen(3000,function(){})
-
-var client = pylon()
-client.set('balancer', { routes : 
-                         [ { route  : 'foo.bar.com'
-                           , host   : ''
-                           , port   : 3434
-                           , weight : 10 
-                           } ] } )
-
-client.connect(3000,function(remote,socket){
-
-})
-
-*/
-
-
 module.exports = pylon
 
 var sv  = require('socketvat')
@@ -39,7 +19,7 @@ pylon.listen = function(opts,cb){
 pylon.prototype.connect = function(opts,cb){
   var client = sv.prototype.connect.call(this,opts,function(r,s){
     s.dataOnce('pylon::id',function(id){
-      cb(r,s,id)
+      cb && cb(r,s,id)
     })
     s.send('pylon::getId')
   })
@@ -66,23 +46,34 @@ pylon.prototype.listen = function(opts,cb){
         default: ;
       }
     })
+    r.once('keys',function(keys,regexp){
+      r.on('get',onGet)
+      r.unsubscribe('get')
+      function onGet(k,v) {
+        self.set(id+' '+k,v)
+      }
+      keys.forEach(function(x){r.get(x)})
+    })
+    r.keys('.*')
     s.on('close',function(){
       self.keys(new RegExp('^'+id)).forEach(function(x){
         self.del(x)
       })
+      delete remotes[id]
     })
-    cb(r,s,id)
+    cb && cb(r,s,id)
   })
   return server
 }
 
-/* */
+/* * /
 
 var serverP = pylon()
-serverP.onAny(ee2log('server'))
+serverP.onAny(ee2log('server-any'))
 var server = serverP.listen(3000,function(){})
 
 var clientP = pylon()
+clientP.onAny(ee2log('client-any'))
 clientP.set('x','y')
 var client = clientP.connect(3000, function(r,s,id){
   r.onAny(ee2log('client-remote'))

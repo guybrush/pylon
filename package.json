@@ -1,6 +1,7 @@
 { "name" : "pylon"
 , "version" : "0.0.1"
 , "description" : "service-registry"
+, "main" : "pylon.js"
 , "bin" : { "pylon" : "./bin/cli.js" }
 , "scripts" :
   { "test" : "node_modules/.bin/mocha test/*.mocha.js -u exports" }
