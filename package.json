@@ -3,7 +3,7 @@
 , "description" : "service-registry"
 , "bin" : { "pylon" : "./bin/cli.js" }
 , "scripts" :
-  { "test" : "./node_modules/.bin/mocha test/*.mocha.js -u exports" }
+  { "test" : "node_modules/.bin/mocha test/*.mocha.js -u exports" }
 , "dependencies" :
   { "eventemitter2" : "0.4.8"
   , "socketvat"     : "0.0.7"
