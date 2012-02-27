@@ -27,7 +27,6 @@ module.exports =
       var p = plan(10,done)
       var j = 0
       r.on('set * foo',function(x){
-        console.log(x)
         if (x<=10) return p.did()
         client.end()
         server.close()
