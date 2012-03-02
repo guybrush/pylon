@@ -16,19 +16,29 @@ pylon.listen = function(opts,cb){
   pylon.prototype.listen.call(p,opts,cb)
 }
 
-pylon.prototype.connect = function(opts,cb){
-  var client = sv.prototype.connect.call(this,opts,function(r,s){
-    s.dataOnce('pylon::id',function(id){
-      cb && cb(r,s,id)
-    })
+pylon.prototype.connect = function(){
+  var args = [].slice.call(arguments)
+  var cb = typeof args[args.length-1] == 'function'
+           ? args[args.length-1]
+           : function(){}
+  args.push(onConnect)
+  var client = sv.prototype.connect.apply(this,args)
+  function onConnect(r,s){
+    s.dataOnce('pylon::id',function(id){cb && cb(r,s,id)})
     s.send('pylon::getId')
-  })
+  }
   return client
 }
 
-pylon.prototype.listen = function(opts,cb){
+pylon.prototype.listen = function(){
   var self = this
-  var server = sv.prototype.listen.call(this,opts,function(r,s){
+  var args = [].slice.call(arguments)
+  var cb = typeof args[args.length-1] == 'function'
+           ? args[args.length-1]
+           : function(){}
+  args.push(onListen)
+  var server = sv.prototype.listen.apply(this,args)
+  function onListen(r,s) {
     var id = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     while (remotes[id]) Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     remotes[id] = {remote:r,socket:s}
@@ -62,7 +72,7 @@ pylon.prototype.listen = function(opts,cb){
       delete remotes[id]
     })
     cb && cb(r,s,id)
-  })
+  }
   return server
 }
 

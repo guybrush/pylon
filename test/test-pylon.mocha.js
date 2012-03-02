@@ -1,4 +1,5 @@
 var pylon = require('../pylon')
+  , fs = require('fs')
   , assert = require('assert')
 
 function ee2log(name){return function(){
@@ -33,9 +34,6 @@ module.exports =
         clearInterval(iv)
       })
     })
-    function ee2log(name){return function(){
-      console.log((name || '☼')+':',this.event,'→',[].slice.call(arguments))
-    }}
   }
 }
 
