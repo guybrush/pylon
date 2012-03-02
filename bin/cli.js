@@ -4,6 +4,9 @@ var pylon = require('../')
   , opti = require('optimist')
   , argv = opti.argv
   , pkg = require('../package.json')
+  , AA = require('async-array')
+  , fs = require('fs')
+  , debug = require('debug')('pylon')
   , help = {}
   , cfg = {}
   , server
@@ -23,15 +26,16 @@ help.logo =
 help.intro =
 [ help.logo
 , ''
-, 'pylon [-r <remote> [-c <cfgFile>]] [-p <port> [-h <host>]] <cmd> [<opts>]'
+//, 'pylon [-r <remote> [-c <cfgFile>]] [-p <port> [-h <host>]] <cmd> [<opts>]'
+, 'pylon <cmd> [<opts>]'
 , ''
 , 'commands:'
 , ''
 , '   version .. print version-number'
-, '   config  .. print config'
+//, '   config  .. print config'
 , '   start   .. start the pylon-server (this only works without -r)'
-, '   keys    .. query for keys with regexp'
-, '   on      .. subscribe to events'
+//, '   keys    .. query for keys with regexp'
+//, '   on      .. subscribe to events'
 , '   help    .. try `pylon help <command>` for more info'
 ].join('\n')
 
@@ -46,7 +50,7 @@ help.version =
 ].join('\n')
 
 help.start =
-[ 'pylon start -p <port> [-h <host>]'
+[ 'pylon start -p <port> [-h <host>] [-k <pathToKey>] [-c <pathToCert>] [-ca <pathToCA-dir]'
 ].join('\n')
 
 
@@ -73,25 +77,46 @@ function parseArgs() {
     case 'config':
       exit(null,cfg)
     case 'start':
+      debug('parsing argv',argv)
       var opts = {}
-      opts.port = cfg.port
-      opts.host = cfg.host
-      server = pylon().listen(opts,function(){})
-      server.on('ready',function(){
-        console.log('pylon is listening on '+opts.host+':'+opts.port)
+      if (!argv.p) return exit(new Error('no port (-p) defined'))
+      opts.port = argv.p
+      opts.host = argv.h || '0.0.0.0'
+      if (!argv.k || !argv.c) return start(opts)
+      opts.key = fs.readFileSync(argv.k)
+      opts.cert = fs.readFileSync(argv.c)
+      if (!argv.C) return start(opts) 
+      fs.readdir(argv.C,function(err,data){
+        if (data.length > 0) {
+          opts.requestCert = true
+          opts.rejectUnauthorized = true
+          new AA(data).map(function(x,i,next){
+            fs.readFile(argv.C+'/'+x,next)
+          }).done(function(err, data){
+            if (err) return exit(new Error(err))
+            opts.ca = data
+            start(opts)
+          }).exec()
+        } else {
+          start(opts)
+        }
       })
+      function start(opts) {
+        debug('starting',opts)
+        var server = pylon().listen(opts,function(r,s){})
+        server.on('listening',function(){
+          console.log('pylon is listening',opts)
+        })
+        server.on('error',function(err){
+          console.error(err)
+        })
+      }
       break
     case 'set':
-      pylon.connect()
-      break
     case 'get':
-      pylon.connect()
-      break
     case 'del':
-      pylon.connect()
-      break
     case 'subscribe':
-      pylon.connect()
+      exit('not implemented yet')
       break
     case 'help':
       if (!argv._[0] || !help[argv._[0]])
