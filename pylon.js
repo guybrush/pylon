@@ -1,6 +1,7 @@
 module.exports = pylon
 
-var sv  = require('socketvat')
+var sv = require('socketvat')
+var debug = require('debug')('pylon')
 
 var remotes = {}
 
@@ -11,11 +12,12 @@ function pylon(opts) {
 
 pylon.prototype = new sv
 
-pylon.listen = function(opts,cb){
+pylon.listen = function(){
   var p = pylon()
-  pylon.prototype.listen.call(p,opts,cb)
+  p.onAny(function(){debug('p **',this.event,arguments)})
+  pylon.prototype.listen.call(p,arguments)
 }
-
+/*
 pylon.prototype.connect = function(){
   var args = [].slice.call(arguments)
   var cb = typeof args[args.length-1] == 'function'
@@ -24,12 +26,16 @@ pylon.prototype.connect = function(){
   args.push(onConnect)
   var client = sv.prototype.connect.apply(this,args)
   function onConnect(r,s){
-    s.dataOnce('pylon::id',function(id){cb && cb(r,s,id)})
+    debug('connected')
+    s.dataOnce('pylon::id',function(id){
+      debug('got id',id)
+      cb && cb(r,s,id)
+    })
     s.send('pylon::getId')
   }
   return client
 }
-
+*/
 pylon.prototype.listen = function(){
   var self = this
   var args = [].slice.call(arguments)
@@ -39,10 +45,12 @@ pylon.prototype.listen = function(){
   args.push(onListen)
   var server = sv.prototype.listen.apply(this,args)
   function onListen(r,s) {
+    debug('client connected')
+    s.onAny(ee2log('s **'))
     var id = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     while (remotes[id]) Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     remotes[id] = {remote:r,socket:s}
-    s.dataOnce('pylon::getId',function(){
+    s.data('pylon::getId',function(){
       s.send('pylon::id',id)
     })
     r.on('*',function(){
@@ -75,6 +83,10 @@ pylon.prototype.listen = function(){
   }
   return server
 }
+
+function ee2log(name){return function(){
+  debug((name || '☼')+':',this.event,'→',[].slice.call(arguments))
+}}
 
 /* * /
 

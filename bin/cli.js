@@ -88,9 +88,11 @@ function parseArgs() {
       if (!argv.C) return start(opts) 
       fs.readdir(argv.C,function(err,data){
         if (data.length > 0) {
+          debug('readdir ca',data)
           opts.requestCert = true
           opts.rejectUnauthorized = true
           new AA(data).map(function(x,i,next){
+            debug('reading ca-file',argv.C+'/'+x)
             fs.readFile(argv.C+'/'+x,next)
           }).done(function(err, data){
             if (err) return exit(new Error(err))
