@@ -27,7 +27,8 @@ module.exports =
     var client = clientP.connect(port, function(r,s,id){
       var p = plan(10,done)
       var j = 0
-      r.on('set * foo',function(x){
+      // <cmd> <ip> <id> <key>
+      r.on('set * * foo',function(x){
         if (x<=10) return p.did()
         client.end()
         server.close()

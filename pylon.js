@@ -17,7 +17,7 @@ pylon.listen = function(){
   p.onAny(function(){debug('p **',this.event,arguments)})
   pylon.prototype.listen.call(p,arguments)
 }
-/*
+/* * /
 pylon.prototype.connect = function(){
   var args = [].slice.call(arguments)
   var cb = typeof args[args.length-1] == 'function'
@@ -35,7 +35,7 @@ pylon.prototype.connect = function(){
   }
   return client
 }
-*/
+/* */
 pylon.prototype.listen = function(){
   var self = this
   var args = [].slice.call(arguments)
@@ -45,8 +45,9 @@ pylon.prototype.listen = function(){
   args.push(onListen)
   var server = sv.prototype.listen.apply(this,args)
   function onListen(r,s) {
-    debug('client connected')
-    s.onAny(ee2log('s **'))
+    debug('client connected',s.socket.remoteAddress)
+    var ip = s.socket.remoteAddress
+    s.onAny(ee2log('socket **'))
     var id = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     while (remotes[id]) Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     remotes[id] = {remote:r,socket:s}
@@ -58,7 +59,7 @@ pylon.prototype.listen = function(){
       var method = this.event
       switch(method) {
         case 'set':
-          args[0] = id+' '+args[0]
+          args[0] = ip+' '+id+' '+args[0]
           self[method].apply(self,args)
           break
         default: ;
@@ -68,13 +69,13 @@ pylon.prototype.listen = function(){
       r.on('get',onGet)
       r.unsubscribe('get')
       function onGet(k,v) {
-        self.set(id+' '+k,v)
+        self.set(ip+' '+id+' '+k,v)
       }
       keys.forEach(function(x){r.get(x)})
     })
     r.keys('.*')
     s.on('close',function(){
-      self.keys(new RegExp('^'+id)).forEach(function(x){
+      self.keys(new RegExp('^'+ip+' '+id)).forEach(function(x){
         self.del(x)
       })
       delete remotes[id]
