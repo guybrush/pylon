@@ -1,4 +1,4 @@
-# pylon (experimental)
+# pylon
 
          ___________________________
         /             _             \
@@ -12,28 +12,28 @@
                                           \_`---´___`---´-´
                                            /../..\ /..\..\
 
+* a pylon-server uses [socketvat] to provide a volatile storage per 
+  pylon-client. every client gets his own event-namespace (`<ip> <id> <key>`).
+* every pylon-client has a local volatile storage which the pylon-server 
+  will subscribe to when the client connects.
+* when pylon-clients disconnect corresponding data will be deleted on 
+  the pylon-server.
+                                           
 ## install
 
-* install node
+* install [node]
 * `npm install pylon -g`
 * `npm test pylon -g`
+* `DEBUG=* npm test pylon -g`
 
 ## cli
 
-    pylon [-r <remote>] [-c <path to configFile>] [<command> [<options>]]
-    
-    commands:
-    
-       version   .. print version-number
-       publish   .. publish to remote pylon-server
-       subscribe .. subscribe to remote pylon-server
-       config    .. get/set local config
-       start     .. start a pylon-server
-       help      .. try `pylon help <command>` for more info
-       
-    notes: `config`, `start` and `help` only work without `-r` option
-       
+TBA
+
 ## api
    
 TBA
+
+[node]: http://nodejs.org
+[socketvat]: https://github.com/guybrush/socketvat
 
