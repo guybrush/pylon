@@ -7,7 +7,7 @@
     "pylon": "./bin/cli.js"
   },
   "scripts": {
-    "test": "node_modules/.bin/mocha test/*.mocha.js -u exports"
+    "test": "node_modules/.bin/mocha"
   },
   "dependencies": {
     "async-array": "0.1.7",

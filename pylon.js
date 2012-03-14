@@ -12,12 +12,18 @@ function pylon(opts) {
 
 pylon.prototype = new sv
 
+pylon.connect = function(){
+  var p = pylon()
+  //p.onAny(function(){debug('p **',this.event,arguments)})
+  pylon.prototype.connect.call(p,arguments)
+}
+
 pylon.listen = function(){
   var p = pylon()
-  p.onAny(function(){debug('p **',this.event,arguments)})
+  //p.onAny(function(){debug('p **',this.event,arguments)})
   pylon.prototype.listen.call(p,arguments)
 }
-/* * /
+
 pylon.prototype.connect = function(){
   var args = [].slice.call(arguments)
   var cb = typeof args[args.length-1] == 'function'
@@ -35,7 +41,7 @@ pylon.prototype.connect = function(){
   }
   return client
 }
-/* */
+
 pylon.prototype.listen = function(){
   var self = this
   var args = [].slice.call(arguments)
