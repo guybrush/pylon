@@ -27,15 +27,15 @@ help.intro =
 [ help.logo
 , ''
 //, 'pylon [-r <remote> [-c <cfgFile>]] [-p <port> [-h <host>]] <cmd> [<opts>]'
-, 'pylon <cmd> [<opts>]'
+, 'pylon [-r remote] <cmd> [<opts>]'
 , ''
 , 'commands:'
 , ''
 , '   version .. print version-number'
-//, '   config  .. print config'
+, '   config  .. print config (this only works without -r)'
 , '   start   .. start the pylon-server (this only works without -r)'
-//, '   keys    .. query for keys with regexp'
-//, '   on      .. subscribe to events'
+, '   keys    .. query for keys with regexp'
+, '   sub     .. subscribe to events'
 , '   help    .. try `pylon help <command>` for more info'
 ].join('\n')
 
@@ -50,7 +50,7 @@ help.version =
 ].join('\n')
 
 help.start =
-[ 'pylon start -p <port> [-h <host>] [-k <pathToKey>] [-c <pathToCert>] [-ca <pathToCA-dir]'
+[ 'pylon start -p <port> [-h <host>] [-k <pathToKey>] [-c <pathToCert>] [--ca <pathToCA-dir]'
 ].join('\n')
 
 
@@ -92,7 +92,7 @@ function parseArgs() {
           opts.requestCert = true
           opts.rejectUnauthorized = true
           new AA(data).map(function(x,i,next){
-            debug('reading ca-file',argv.C+'/'+x)
+            debug('reading ca-file',argv.ca+'/'+x)
             fs.readFile(argv.C+'/'+x,next)
           }).done(function(err, data){
             if (err) return exit(new Error(err))

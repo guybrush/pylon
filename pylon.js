@@ -95,29 +95,3 @@ function ee2log(name){return function(){
   debug((name || '☼')+':',this.event,'→',[].slice.call(arguments))
 }}
 
-/* * /
-
-var serverP = pylon()
-serverP.onAny(ee2log('server-any'))
-var server = serverP.listen(3000,function(){})
-
-var clientP = pylon()
-clientP.onAny(ee2log('client-any'))
-clientP.set('x','y')
-var client = clientP.connect(3000, function(r,s,id){
-  r.onAny(ee2log('client-remote'))
-  setTimeout(function(){
-    client.end()
-  },2000)
-})
-var i = 0
-setInterval(function(){
-  clientP.set('foo',i++)
-},500)
-
-function ee2log(name){return function(){
-  console.log((name || '☼')+':',this.event,'→',[].slice.call(arguments))
-}}
-
-/* */
-
