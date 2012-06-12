@@ -63,21 +63,64 @@ pylon.prototype.listen = function(){
     r.on('*',function(){
       var args = [].slice.call(arguments)
       var method = this.event
+      // for all methods which manipulate data: prefix keys with "<ip> <id> "
       switch(method) {
         case 'set':
+        case 'del':
+        // case 'exists':
+        // case 'expire':     // emits del
+        // case 'expireat':   // emits del
+        // case 'persist':
+        case 'append':
+        case 'decr':
+        case 'decrby':
+        case 'incr':
+        case 'incrby':
+        // case 'setbit':     // not implemented yet
+        // case 'setex':      // not implemented yet
+        // case 'setnx':      // emits set
+        // case 'mset':       // emits set
+        // case 'msetnx':     // emits set
+        case 'setrange':
+        case 'hdel':
+        case 'hincr':
+        case 'hincrby':
+        case 'hdecr':
+        case 'hdecrby':
+        case 'hset':
+        // case 'hsetnx':     // emits hset
+        case 'lpop':
+        case 'lpush':
+        case 'lpushx':
+        case 'lrem':
+        case 'lset':
+        case 'ltrim':
+        case 'rpop':
+        case 'rpush':
+        case 'rpushx':
           args[0] = ip+' '+id+' '+args[0]
+          self[method].apply(self,args)
+          break
+        case 'rename':
+        case 'renamenx':
+        case 'swap':
+          args[0] = ip+' '+id+' '+args[0]
+          args[1] = ip+' '+id+' '+args[1]
           self[method].apply(self,args)
           break
         default: ;
       }
     })
     r.once('keys',function(keys,regexp){
-      r.on('get',onGet)
-      r.unsubscribe('get')
-      function onGet(k,v) {
-        self.set(ip+' '+id+' '+k,v)
+      r.once('mget',onMget)
+      r.mget(keys)
+      function onMget() {
+        var args = [].slice.call(arguments)
+        var vals = args.pop()
+        args.forEach(function(x,i){
+          self.set(ip+' '+id+' '+x, vals[i])
+        })
       }
-      keys.forEach(function(x){r.get(x)})
     })
     r.keys('.*')
     s.on('close',function(){
