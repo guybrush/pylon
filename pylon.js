@@ -111,7 +111,7 @@ pylon.prototype.listen = function(){
         default: ;
       }
     })
-    r.once('keys',function(keys,regexp){
+    r.once('keys',function(regexp,keys){
       r.once('mget',onMget)
       r.mget(keys)
       function onMget() {
