@@ -32,12 +32,18 @@ pylon.prototype.connect = function(){
   args.push(onConnect)
   var client = sv.prototype.connect.apply(this,args)
   function onConnect(r,s){
-    debug('connected')
+    debug('connected to pylon')
     s.dataOnce('pylon::id',function(id){
       debug('got id',id)
       cb && cb(r,s,id)
     })
     s.send('pylon::getId')
+    s.on('error',function(err){
+      debug('socket error',err)
+    })
+    s.on('close',function(){
+      debug('socket closed')
+    })
   }
   return client
 }
@@ -51,11 +57,11 @@ pylon.prototype.listen = function(){
   args.push(onListen)
   var server = sv.prototype.listen.apply(this,args)
   function onListen(r,s) {
-    debug('client connected',s.socket.remoteAddress)
     var ip = s.socket.remoteAddress
     s.onAny(ee2log('socket **'))
     var id = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     while (remotes[id]) Math.floor(Math.random()*Math.pow(2,32)).toString(16)
+    debug('client connected',{id:id,ip:ip})
     remotes[id] = {remote:r,socket:s}
     s.data('pylon::getId',function(){
       s.send('pylon::id',id)
@@ -124,10 +130,14 @@ pylon.prototype.listen = function(){
     })
     r.keys('.*')
     s.on('close',function(){
+      debug('client disconnected',{id:id,ip:ip})
       self.keys(new RegExp('^'+ip+' '+id)).forEach(function(x){
         self.del(x)
       })
       delete remotes[id]
+    })
+    s.on('error',function(err){
+      debug('socket error',{id:id,ip:ip,error:err})
     })
     cb && cb(r,s,id)
   }
