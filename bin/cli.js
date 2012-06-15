@@ -50,7 +50,7 @@ help.version =
 ].join('\n')
 
 help.start =
-[ 'pylon start -p <port> [-h <host>] [-k <pathToKey>] [-c <pathToCert>] [--ca <pathToCA-dir]'
+[ 'pylon start -p <port> [-h <host>] [-k <pathToKey>] [-c <pathToCert>] [-C <pathToCA-dir]'
 ].join('\n')
 
 

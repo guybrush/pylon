@@ -14,35 +14,34 @@ pylon.prototype = new sv
 
 pylon.connect = function(){
   var p = pylon()
-  //p.onAny(function(){debug('p **',this.event,arguments)})
   pylon.prototype.connect.call(p,arguments)
 }
 
 pylon.listen = function(){
   var p = pylon()
-  //p.onAny(function(){debug('p **',this.event,arguments)})
   pylon.prototype.listen.call(p,arguments)
 }
 
 pylon.prototype.connect = function(){
   var args = [].slice.call(arguments)
   var cb = typeof args[args.length-1] == 'function'
-           ? args[args.length-1]
-           : function(){}
-  args.push(onConnect)
+           ? args.pop()
+           : null
+  args.push(onConnectPylon)
   var client = sv.prototype.connect.apply(this,args)
-  function onConnect(r,s){
+  function onConnectPylon(r,s){
     debug('connected to pylon')
     s.dataOnce('pylon::id',function(id){
       debug('got id',id)
       cb && cb(r,s,id)
     })
     s.send('pylon::getId')
-    s.on('error',function(err){
-      debug('socket error',err)
-    })
+    s.on('error',function(err){debug('socket error',err)})
     s.on('close',function(){
       debug('socket closed')
+      s.removeAllListeners()
+      s.destroy()
+      client.destroy()
     })
   }
   return client
@@ -58,11 +57,11 @@ pylon.prototype.listen = function(){
   var server = sv.prototype.listen.apply(this,args)
   function onListen(r,s) {
     var ip = s.socket.remoteAddress
-    s.onAny(ee2log('socket **'))
+    // s.onAny(ee2log('socket **'))
     var id = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     while (remotes[id]) Math.floor(Math.random()*Math.pow(2,32)).toString(16)
-    debug('client connected',{id:id,ip:ip})
     remotes[id] = {remote:r,socket:s}
+    debug('client connected',{id:id,ip:ip,clientCount:Object.keys(remotes).length})
     s.data('pylon::getId',function(){
       s.send('pylon::id',id)
     })
@@ -70,7 +69,7 @@ pylon.prototype.listen = function(){
       var args = [].slice.call(arguments)
       var method = this.event
       // for all methods which manipulate data: prefix keys with "<ip> <id> "
-      switch(method) {
+      switch (method) {
         case 'set':
         case 'del':
         // case 'exists':
@@ -124,6 +123,7 @@ pylon.prototype.listen = function(){
         var args = [].slice.call(arguments)
         var vals = args.pop()
         args.forEach(function(x,i){
+          debug('setting',ip+' '+id+' '+x, vals[i])
           self.set(ip+' '+id+' '+x, vals[i])
         })
       }
@@ -132,6 +132,7 @@ pylon.prototype.listen = function(){
     s.on('close',function(){
       debug('client disconnected',{id:id,ip:ip})
       self.keys(new RegExp('^'+ip+' '+id)).forEach(function(x){
+        debug('deleting',x)
         self.del(x)
       })
       delete remotes[id]
