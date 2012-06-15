@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "async-array": "0.1.7",
-    "eventemitter2": "0.4.8",
+    "eventemitter2": "0.4.9",
     "debug": "0.5.0",
     "optimist": "0.3.1",
-    "socketvat": "0.0.18"
+    "socketvat": "0.0.19"
   },
   "devDependencies": {
     "mocha": "0.13.x"
