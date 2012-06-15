@@ -14,7 +14,7 @@
     "eventemitter2": "0.4.8",
     "debug": "0.5.0",
     "optimist": "0.3.1",
-    "socketvat": "0.0.17"
+    "socketvat": "0.0.18"
   },
   "devDependencies": {
     "mocha": "0.13.x"
