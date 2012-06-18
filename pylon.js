@@ -2,12 +2,25 @@ module.exports = pylon
 
 var sv = require('socketvat')
 var debug = require('debug')('pylon')
-
-var remotes = {}
+var fs = require('fs')
+var path = require('path')
+var _ = require('underscore')
+var home = ( process.platform === "win32" )
+           ? process.env.USERPROFILE
+           : process.env.HOME
 
 function pylon(opts) {
   if (!(this instanceof pylon)) return new pylon(opts)
   sv.call(this)
+  this.remotes = {}
+  this.config = {remotes:{}}
+  opts = opts || home+'/.pylon/config.js'
+  if (_.isString(opts) && path.existsSync(opts)) {
+    this.config = require(opts)
+  }
+  else if (_.isObject(opts)) {
+    this.config = require(opts)
+  }
 }
 
 pylon.prototype = new sv
@@ -22,11 +35,22 @@ pylon.listen = function(){
   pylon.prototype.listen.call(p,arguments)
 }
 
+var didInitArgs
 pylon.prototype.connect = function(){
   var args = [].slice.call(arguments)
   var cb = typeof args[args.length-1] == 'function'
            ? args.pop()
            : null
+  if (!didInitArgs) {
+    if (_.isString(args[0]) && this.config.remotes[args[0]])
+      args[0] = this.config.remotes[args[0]]
+    if (args[0].cert)
+      args[0].cert = fs.readFileSync(args[0].cert)
+    if (args[0].key)
+      args[0].key = fs.readFileSync(args[0].key)
+    didInitArgs = true
+  }
+  
   args.push(onConnectPylon)
   var client = sv.prototype.connect.apply(this,args)
   function onConnectPylon(r,s){
@@ -59,9 +83,9 @@ pylon.prototype.listen = function(){
     var ip = s.socket.remoteAddress
     // s.onAny(ee2log('socket **'))
     var id = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
-    while (remotes[id]) Math.floor(Math.random()*Math.pow(2,32)).toString(16)
-    remotes[id] = {remote:r,socket:s}
-    debug('client connected',{id:id,ip:ip,clientCount:Object.keys(remotes).length})
+    while (self.remotes[id]) Math.floor(Math.random()*Math.pow(2,32)).toString(16)
+    self.remotes[id] = {remote:r,socket:s}
+    debug('client connected',{id:id,ip:ip,clientCount:Object.keys(self.remotes).length})
     s.data('pylon::getId',function(){
       s.send('pylon::id',id)
     })
@@ -135,7 +159,7 @@ pylon.prototype.listen = function(){
         debug('deleting',x)
         self.del(x)
       })
-      delete remotes[id]
+      delete self.remotes[id]
     })
     s.on('error',function(err){
       debug('socket error',{id:id,ip:ip,error:err})

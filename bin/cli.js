@@ -2,6 +2,7 @@
 
 var pylon = require('../')
   , opti = require('optimist')
+  , path = require('path')
   , argv = opti.argv
   , pkg = require('../package.json')
   , AA = require('async-array')
@@ -35,32 +36,43 @@ help.intro =
 , '   config  .. print config (this only works without -r)'
 , '   start   .. start the pylon-server (this only works without -r)'
 , '   keys    .. query for keys with regexp'
-, '   sub     .. subscribe to events'
+, '   on      .. subscribe to events'
 , '   help    .. try `pylon help <command>` for more info'
 ].join('\n')
 
 help.version =
-[ 'pylon [-r <remote> [-c <cfgFile>]] [-p <port> [-h <host>]] version'
+[ 'pylon [-r <remote> [-f <cfgFile>]] [-p <port> [-h <host>]] version'
 , ''
 , 'examples:'
 , ''
-, '   pylon version .. print version of local installed pylon'
-, '   pylon -r a1f  .. print version of remote running pylon'
-, '   pylon -p 3000 -h 234.345.456.567 version .. print version of remote pylon..'
+, '  pylon version .. print version of local installed pylon'
+, '  pylon -r a1f  .. print version of remote running pylon'
+, '  pylon -p 3000 -h 234.345.456.567 version .. print version of remote pylon..'
 ].join('\n')
 
 help.start =
-[ 'pylon start -p <port> [-h <host>] [-k <pathToKey>] [-c <pathToCert>] [-C <pathToCA-dir]'
-].join('\n')
-
-
-help.on =
-[ 'pylon [-r <remote> [-c <cfgFile>]] [-p <port> [-h <host>]] on <event>'
+[ 'pylon start -p <port> [-h <host>] [-f <cfgFile>] [-k <pathToKey>] [-c <pathToCert>] [-C <pathToCA-dir]'
 , ''
 , 'examples:'
 , ''
-, '   pylon -r a1f on "set * balancer"'
-, '   pylon -r a1b on "**"'
+, '  pylon start -p 3000 -k /path/to/key.pem -c /path/to/cert.pem -C /path/to/caDir'
+].join('\n')
+
+help.on =
+[ 'pylon [-r <remote> [-f <cfgFile>]] [-p <port> [-h <host>]] on <event>'
+, ''
+, 'examples:'
+, ''
+, '  pylon -r a1f on "set * * balancer"'
+, '  pylon -r a1b on "**"'
+].join('\n')
+
+help.keys =
+[ 'pylon [-r <remote> [-f <cfgFile>]] [-p <port> [-h <host>]] keys <regexp>'
+, ''
+, 'examples:'
+, ''
+, '  pylon -r a1f keys ".*"'
 ].join('\n')
 
 if (!argv._[0]) return exit(null, help.intro)
@@ -75,37 +87,31 @@ function parseArgs() {
       exit(null,pkg.version)
       break
     case 'config':
-      exit(null,cfg)
+      exit(null,pylon().config)
     case 'start':
       debug('parsing argv',argv)
+      var p = pylon(argv.f)
       var opts = {}
-      if (!argv.p) return exit(new Error('no port (-p) defined'))
-      opts.port = argv.p
-      opts.host = argv.h || '0.0.0.0'
-      if (!argv.k || !argv.c) return start(opts)
-      opts.key = fs.readFileSync(argv.k)
-      opts.cert = fs.readFileSync(argv.c)
-      if (!argv.C) return start(opts) 
-      fs.readdir(argv.C,function(err,data){
-        if (data.length > 0) {
-          debug('readdir ca',data)
-          opts.requestCert = true
-          opts.rejectUnauthorized = true
-          new AA(data).map(function(x,i,next){
-            debug('reading ca-file',argv.ca+'/'+x)
-            fs.readFile(argv.C+'/'+x,next)
-          }).done(function(err, data){
-            if (err) return exit(new Error(err))
-            opts.ca = data
-            start(opts)
-          }).exec()
-        } else {
-          start(opts)
-        }
-      })
+      opts.port = argv.p || p.config.port || 3000
+      opts.host = argv.h || p.config.host || '0.0.0.0'
+      opts.key = (argv.k && fs.readFileSync(argv.k))
+                 || (p.config.key && fs.readFileSync(p.config.key))
+      opts.cert = (argv.c && fs.readFileSync(argv.c)) 
+                 || (p.config.cert && fs.readFileSync(p.config.cert))
+      opts.ca = (argv.C && readCa(argv.C))
+                || (p.config.ca && readCa(p.config.ca))
+      start(opts)
+      function readCa(dir) {
+        var files = fs.readdirSync(dir)
+        var ca = []
+        files.forEach(function(x,i){
+          ca.push(fs.readFileSync(path.join(dir,x)))
+        })
+        return ca
+      }
       function start(opts) {
         debug('starting',opts)
-        var server = pylon().listen(opts,function(r,s){})
+        var server = p.listen(opts,function(r,s){})
         server.on('listening',function(){
           console.log('pylon is listening',opts)
         })
@@ -114,11 +120,41 @@ function parseArgs() {
         })
       }
       break
-    case 'set':
-    case 'get':
-    case 'del':
-    case 'subscribe':
-      exit('not implemented yet')
+    case 'keys':
+      var p = pylon(argv.f)
+      var opts = argv.r || { port : argv.p || p.config.port || 3000
+                           , key  : argv.k || p.config.key
+                           , cert : argv.c || p.config.cert
+                           }
+      var keys = argv._[0] || '.*'
+      var client = p.connect(opts,function(r,s){
+        console.log('connected')
+        r.once('keys',function(){
+          exit(null,console.log(arguments))
+        })
+        r.keys(keys)
+      })
+      client.on('error',function(err){exit(err)})
+      client.on('close',function(){console.log('close')})
+      break
+    case 'sub':
+    case 'on':
+      var p = pylon(argv.f)
+      var opts = argv.r || { port : argv.p || p.config.port || 3000
+                           , key  : argv.k || p.config.key
+                           , cert : argv.c || p.config.cert
+                           }
+      var sub = argv._[0] || 'all'
+      if (sub == 'all') sub = '**'
+      var client = p.connect(opts,function(r,s){
+        console.log('connected')
+        var util = require('util')
+        r.on(sub,function(){
+          var args = [].slice.call(arguments)
+          console.log(this.event,'→', args)
+        })
+      })
+      client.on('error',exit)
       break
     case 'help':
       if (!argv._[0] || !help[argv._[0]])
@@ -132,7 +168,7 @@ function parseArgs() {
 
 function exit(err,msg) {
   server && server.close()
-  if (err) console.error(err)
+  if (err) console.error('error:',err)
   else console.log(msg)
   process.exit(0)
 }
