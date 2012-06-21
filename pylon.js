@@ -35,12 +35,13 @@ pylon.listen = function(){
   pylon.prototype.listen.call(p,arguments)
 }
 
+var onConnectCb
 pylon.prototype.connect = function(){
   var args = [].slice.call(arguments)
   if (!this.didInitArgs) {
-    var cb = typeof args[args.length-1] == 'function'
-             ? args.pop()
-             : null
+    onConnectCb = typeof args[args.length-1] == 'function'
+                ? args.pop()
+                : null
     if (_.isString(args[0]) && this.config.remotes[args[0]])
       args[0] = this.config.remotes[args[0]]
     if (args[0].cert)
@@ -48,23 +49,17 @@ pylon.prototype.connect = function(){
     if (args[0].key)
       args[0].key = fs.readFileSync(args[0].key)
     this.didInitArgs = true
-    this.on('remote',onRemote)
   }
+  args.push(onConnect)
   var client = sv.prototype.connect.apply(this,args)
   
-  function onRemote(r,s){
+  function onConnect(r,s){
     s.dataOnce('pylon::id',function(id){
       debug('got id',id)
-      cb && cb(r,s,id)
+      onConnectCb && onConnectCb(r,s,id)
     })
     s.send('pylon::getId')
     s.on('error',function(err){debug('socket error',err)})
-    s.on('close',function(){
-      debug('socket closed')
-      s.removeAllListeners()
-      s.destroy()
-      client.destroy()
-    })
   }
   return client
 }
