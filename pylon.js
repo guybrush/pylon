@@ -38,10 +38,10 @@ pylon.listen = function(){
 var didInitArgs
 pylon.prototype.connect = function(){
   var args = [].slice.call(arguments)
-  var cb = typeof args[args.length-1] == 'function'
-           ? args.pop()
-           : null
   if (!didInitArgs) {
+    var cb = typeof args[args.length-1] == 'function'
+             ? args.pop()
+             : null
     if (_.isString(args[0]) && this.config.remotes[args[0]])
       args[0] = this.config.remotes[args[0]]
     if (args[0].cert)
@@ -49,12 +49,12 @@ pylon.prototype.connect = function(){
     if (args[0].key)
       args[0].key = fs.readFileSync(args[0].key)
     didInitArgs = true
+    this.on('remote',onRemote)
   }
-  
-  args.push(onConnectPylon)
   var client = sv.prototype.connect.apply(this,args)
-  function onConnectPylon(r,s){
-    debug('connected to pylon')
+  
+  function onRemote(r,s){
+    console.log('onremote')
     s.dataOnce('pylon::id',function(id){
       debug('got id',id)
       cb && cb(r,s,id)
