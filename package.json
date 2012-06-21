@@ -1,6 +1,6 @@
 {
   "name": "pylon",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "service-registry",
   "main": "pylon.js",
   "bin": {
