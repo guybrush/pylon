@@ -27,13 +27,13 @@ ME.simple = function(done){
         client2P.set('foo','bla')
       },20)
       // <cmd> <ip> <id> <key>
-      r1.on('set * '+id2+' foo',function(x){
+      r1.once('set * '+id2+' foo',function(x){
         assert.equal(x,'bla')
         clearInterval(iv)
         p.did()
         client2.end()
       })
-      r1.on('del * '+id2+' foo',function(){
+      r1.once('del * '+id2+' foo',function(){
         p.did()
         client1.end()
         server.close()
