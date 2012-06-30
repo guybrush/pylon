@@ -55,6 +55,9 @@ pylon.prototype.connect = function(){
       args[0].key = fs.readFileSync(args[0].key)
     this.didInitArgs = true
   }
+  var argsReconnect
+  args.forEach(function(x){if (x.reconnect) argsReconnect=true})
+  if (!argsReconnect) args.push({reconnect:this.config.reconnect})
   args.push(onConnect)
   var client = sv.prototype.connect.apply(this,args)
 
