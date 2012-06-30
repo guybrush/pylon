@@ -59,6 +59,9 @@ pylon.prototype.connect = function(){
       onConnectCb && onConnectCb(r,s,id)
     })
     s.send('pylon::getId')
+    s.data('pylon::ping',function(){
+      s.send('pylon::ping')
+    })
     s.on('error',function(err){debug('socket error',err)})
   }
   return client
@@ -74,14 +77,29 @@ pylon.prototype.listen = function(){
   var server = sv.prototype.listen.apply(this,args)
   function onListen(r,s) {
     var ip = s.socket.remoteAddress
-    // s.onAny(ee2log('socket **'))
     var id = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     while (self.remotes[id]) Math.floor(Math.random()*Math.pow(2,32)).toString(16)
     self.remotes[id] = {remote:r,socket:s}
+    var onend = function() {
+      self.keys(new RegExp('^'+ip+' '+id)).forEach(function(x){
+        debug('deleting',x)
+        self.del(x)
+      })
+      delete self.remotes[id]
+    }
+    var iv = setInterval(function ping() {
+      var to = setTimeout(function(){
+        clearInterval(iv)
+        s.destroy()
+      },5000)
+      s.dataOnce('pylon::ping',function(){
+        debug('pinged client')
+        clearTimeout(to)
+      })
+      s.send('pylon::ping')
+    },10000)
     debug('client connected',{id:id,ip:ip,clientCount:Object.keys(self.remotes).length})
-    s.data('pylon::getId',function(){
-      s.send('pylon::id',id)
-    })
+    s.data('pylon::getId',function(){s.send('pylon::id',id)})
     r.on('*',function(){
       var args = [].slice.call(arguments)
       var method = this.event
@@ -146,16 +164,10 @@ pylon.prototype.listen = function(){
       }
     })
     r.keys('.*')
-    s.on('close',function(){
-      debug('client disconnected',{id:id,ip:ip})
-      self.keys(new RegExp('^'+ip+' '+id)).forEach(function(x){
-        debug('deleting',x)
-        self.del(x)
-      })
-      delete self.remotes[id]
-    })
+    s.on('close',onend)
     s.on('error',function(err){
-      debug('socket error',{id:id,ip:ip,error:err})
+      s.destroy()
+      onend()
     })
     cb && cb(r,s,id)
   }
