@@ -26,6 +26,7 @@ function pylon(opts) {
   this.config.ping = this.config.ping || {}
   this.config.ping.timeout = this.config.ping.timeout || 5000
   this.config.ping.interval = this.config.ping.interval || 10000
+  this.config.reconnect = this.config.reconnect || 1000
 }
 
 pylon.prototype = new sv
