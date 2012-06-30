@@ -9,18 +9,23 @@ var home = ( process.platform === "win32" )
            ? process.env.USERPROFILE
            : process.env.HOME
 
+
+// pylon('/path/to/config.{js,json}')
+// pylon(remotes:{foo:{port:4545}}})
 function pylon(opts) {
   if (!(this instanceof pylon)) return new pylon(opts)
   sv.call(this)
   this.remotes = {}
   this.config = {remotes:{}}
   opts = opts || home+'/.pylon/config.js'
-  if (_.isString(opts) && path.existsSync(opts)) {
+  if (_.isString(opts) && path.existsSync(opts))
     this.config = require(opts)
-  }
-  else if (_.isObject(opts)) {
-    this.config = require(opts)
-  }
+  else if (_.isObject(opts))
+    this.config = opts
+  this.config.remotes = this.config.remotes || {}
+  this.config.ping = this.config.ping || {}
+  this.config.ping.timeout = this.config.ping.timeout || 5000
+  this.config.ping.interval = this.config.ping.interval || 10000
 }
 
 pylon.prototype = new sv
@@ -52,7 +57,7 @@ pylon.prototype.connect = function(){
   }
   args.push(onConnect)
   var client = sv.prototype.connect.apply(this,args)
-  
+
   function onConnect(r,s){
     s.dataOnce('pylon::id',function(id){
       debug('got id',id)
@@ -91,13 +96,13 @@ pylon.prototype.listen = function(){
       var to = setTimeout(function(){
         clearInterval(iv)
         s.destroy()
-      },5000)
+      },self.config.ping.timeout)
       s.dataOnce('pylon::ping',function(){
         debug('pinged client')
         clearTimeout(to)
       })
       s.send('pylon::ping')
-    },10000)
+    },self.config.ping.interval)
     debug('client connected',{id:id,ip:ip,clientCount:Object.keys(self.remotes).length})
     s.data('pylon::getId',function(){s.send('pylon::id',id)})
     r.on('*',function(){
