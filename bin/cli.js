@@ -12,6 +12,10 @@ var pylon = require('../')
   , cfg = {}
   , server
   
+// node@0.6.x compat
+fs.exists = fs.exists || path.exists
+fs.existsSync = fs.existsSync || path.existsSync
+  
 cfg.port = Math.floor(Math.random() * 40000 + 10000)
 cfg.host = '0.0.0.0'
 cfg.remotes = {local:{port:cfg.port,host:cfg.host}}

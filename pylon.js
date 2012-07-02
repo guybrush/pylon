@@ -9,6 +9,10 @@ var home = ( process.platform === "win32" )
            ? process.env.USERPROFILE
            : process.env.HOME
 
+// node@0.6.x compat
+fs.exists = fs.exists || path.exists
+fs.existsSync = fs.existsSync || path.existsSync
+ 
 
 // pylon('/path/to/config.{js,json}')
 // pylon(remotes:{foo:{port:4545}}})
@@ -18,7 +22,7 @@ function pylon(opts) {
   this.remotes = {}
   this.config = {remotes:{}}
   opts = opts || home+'/.pylon/config.js'
-  if (_.isString(opts) && path.existsSync(opts))
+  if (_.isString(opts) && fs.existsSync(opts))
     this.config = require(opts)
   else if (_.isObject(opts))
     this.config = opts
