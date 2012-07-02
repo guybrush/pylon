@@ -133,8 +133,8 @@ function parseArgs() {
       var keys = argv._[0] || '.*'
       var client = p.connect(opts,function(r,s){
         console.log('connected')
-        r.once('keys',function(){
-          exit(null,console.log(arguments))
+        r.once('keys',function(regexp,keys){
+          exit(null,keys)
         })
         r.keys(keys)
       })

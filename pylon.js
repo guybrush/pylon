@@ -106,7 +106,7 @@ pylon.prototype.listen = function(){
         s.destroy()
       },self.config.ping.timeout)
       s.dataOnce('pylon::ping',function(){
-        debug('pinged client')
+        //debug('pinged client')
         clearTimeout(to)
       })
       s.send('pylon::ping')
@@ -166,7 +166,7 @@ pylon.prototype.listen = function(){
     })
     r.once('keys',function(regexp,keys){
       r.once('mget',onMget)
-      r.mget(keys)
+      r.mget.apply(null,keys)
       function onMget() {
         var args = [].slice.call(arguments)
         var vals = args.pop()
