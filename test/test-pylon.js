@@ -2,6 +2,7 @@ var pylon = require('../pylon')
   , fs = require('fs')
   , assert = require('assert')
   , ME = module.exports
+  , debug = require('debug')('test')
   
 function ee2log(name){return function(){
   debug((name || '☼')+':',this.event,'→',[].slice.call(arguments))

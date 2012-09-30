@@ -90,23 +90,23 @@ pylon.prototype.listen = function(){
   var server = sv.prototype.listen.apply(this,args)
   function onListen(r,s) {
     var ip = s.socket.remoteAddress
-    var id = Math.floor(Math.random()*Math.pow(2,32)).toString(16)
-    while (self.remotes[id]) Math.floor(Math.random()*Math.pow(2,32)).toString(16)
+    var id = genId()
+    while (self.remotes[id]) genId()
     self.remotes[id] = {remote:r,socket:s}
     var onend = function() {
       self.keys(new RegExp('^'+ip+' '+id)).forEach(function(x){
         debug('deleting',x)
         self.del(x)
       })
+      s.destroy()
       delete self.remotes[id]
     }
     var iv = setInterval(function ping() {
       var to = setTimeout(function(){
         clearInterval(iv)
-        s.destroy()
+        onend()
       },self.config.ping.timeout)
       s.dataOnce('pylon::ping',function(){
-        //debug('pinged client')
         clearTimeout(to)
       })
       s.send('pylon::ping')
@@ -178,10 +178,7 @@ pylon.prototype.listen = function(){
     })
     r.keys('.*')
     s.on('close',onend)
-    s.on('error',function(err){
-      s.destroy()
-      onend()
-    })
+    s.on('error',onend)
     cb && cb(r,s,id)
   }
   return server
@@ -190,4 +187,13 @@ pylon.prototype.listen = function(){
 function ee2log(name){return function(){
   debug((name || '☼')+':',this.event,'→',[].slice.call(arguments))
 }}
+
+function genId(len) {
+  len = len ? parseInt(len) : 8
+  var ret = ''
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWYXZabcdefghijklmnopqrstuvwyxz0123456789'
+  while (len--)
+    ret += chars[Math.round(Math.random() * (chars.length-1))]
+  return ret
+}
 
