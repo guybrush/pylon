@@ -45,13 +45,13 @@ pylon.listen = function(){
   pylon.prototype.listen.call(p,arguments)
 }
 
-var onConnectCb
 pylon.prototype.connect = function(){
+  var self = this
   var args = [].slice.call(arguments)
   if (!this.didInitArgs) {
-    onConnectCb = typeof args[args.length-1] == 'function'
-                ? args.pop()
-                : null
+    this.onConnectCb = typeof args[args.length-1] == 'function'
+                     ? args.pop()
+                     : null
     if (_.isString(args[0]) && this.config.remotes[args[0]])
       args[0] = this.config.remotes[args[0]]
     if (args[0].cert)
@@ -69,7 +69,7 @@ pylon.prototype.connect = function(){
   function onConnect(r,s){
     s.dataOnce('pylon::id',function(id){
       debug('got id',id)
-      onConnectCb && onConnectCb(r,s,id)
+      self.onConnectCb && self.onConnectCb(r,s,id)
     })
     s.send('pylon::getId')
     s.data('pylon::ping',function(){
