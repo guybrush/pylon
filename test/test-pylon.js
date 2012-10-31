@@ -43,3 +43,24 @@ ME.simple = function(done){
   })
 }
 
+ME['reconnect'] = function(done){
+  this.timeout(20000)
+  var port = ~~(Math.random()*50000)+10000
+  var p = pylon()
+
+  var c = pylon()
+  var x = 0
+  var cId
+  var pServer = p.listen(port)
+
+  c.set('x',1)
+  
+  var P = plan(2,done)
+  var cClient = c.connect(port,{reconnect:200},function(r,s,id){
+    cId=id
+    assert.equal(p.sockets.length,1)
+    p.sockets[0].end()
+    P.did()
+  })
+}
+

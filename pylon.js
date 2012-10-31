@@ -31,6 +31,8 @@ function pylon(opts) {
   this.config.ping.timeout = this.config.ping.timeout || 5000
   this.config.ping.interval = this.config.ping.interval || 10000
   this.config.reconnect = this.config.reconnect || 1000
+  this.didInitArgs = false
+  this.onConnectCb = false
 }
 
 pylon.prototype = new sv
@@ -177,6 +179,7 @@ pylon.prototype.listen = function(){
       }
     })
     r.keys('.*')
+    s.on('end',onend)
     s.on('close',onend)
     s.on('error',onend)
     cb && cb(r,s,id)
