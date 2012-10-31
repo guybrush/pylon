@@ -58,6 +58,9 @@ pylon.prototype.connect = function(){
 
     if (_.isString(args[0]) && this.config.remotes[args[0]]) {
       var c = this.config.remotes[args[0]]
+      args[0] = {}
+      if (c.host) args[0].host = c.host
+      if (c.port) args[0].port = c.port
       if (c.cert) args[0].cert = fs.readFileSync(c.cert)
       if (c.key) args[0].key = fs.readFileSync(c.key)
     }
