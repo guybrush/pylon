@@ -50,16 +50,17 @@ pylon.listen = function(){
 pylon.prototype.connect = function(){
   var self = this
   var args = [].slice.call(arguments)
+
   if (!this.didInitArgs) {
     this.onConnectCb = typeof args[args.length-1] == 'function'
                      ? args.pop()
                      : null
-    if (_.isString(args[0]) && this.config.remotes[args[0]])
-      args[0] = this.config.remotes[args[0]]
-    if (args[0].cert)
-      args[0].cert = fs.readFileSync(args[0].cert)
-    if (args[0].key)
-      args[0].key = fs.readFileSync(args[0].key)
+
+    if (_.isString(args[0]) && this.config.remotes[args[0]]) {
+      var c = this.config.remotes[args[0]]
+      if (c.cert) args[0].cert = fs.readFileSync(c.cert)
+      if (c.key) args[0].key = fs.readFileSync(c.key)
+    }
     this.didInitArgs = true
   }
   var argsReconnect
