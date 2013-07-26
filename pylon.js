@@ -186,7 +186,7 @@ pylon.prototype.listen = function(){
     s.on('end',onend)
     s.on('close',onend)
     s.on('error',onend)
-    cb && cb(r,s,id)
+    cb && cb(r,s,id,ip)
   }
   return server
 }
