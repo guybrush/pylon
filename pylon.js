@@ -73,11 +73,11 @@ pylon.prototype.connect = function(){
   var client = sv.prototype.connect.apply(this,args)
 
   function onConnect(r,s){
-    s.dataOnce('pylon::id',function(id){
-      debug('got id',id)
-      self.onConnectCb && self.onConnectCb(r,s,id)
+    s.dataOnce('pylon::info',function(info){
+      debug('got id',info)
+      self.onConnectCb && self.onConnectCb(r,s,info.id,info.ip)
     })
-    s.send('pylon::getId')
+    s.send('pylon::getInfo')
     s.data('pylon::ping',function(){
       s.send('pylon::ping')
     })
@@ -118,7 +118,7 @@ pylon.prototype.listen = function(){
       s.send('pylon::ping')
     },self.config.ping.interval)
     debug('client connected',{id:id,ip:ip,clientCount:Object.keys(self.remotes).length})
-    s.data('pylon::getId',function(){s.send('pylon::id',id)})
+    s.data('pylon::getInfo',function(){s.send('pylon::info',{id:id,ip:ip})})
     r.on('*',function(){
       var args = [].slice.call(arguments)
       var method = this.event

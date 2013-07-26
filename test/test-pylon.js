@@ -21,8 +21,10 @@ ME.simple = function(done){
   var server = serverP.listen(port)
   var client1P = pylon()
   var client2P = pylon()
-  var client1 = client1P.connect(port, function(r1,s1,id1){
-    var client2 = client2P.connect(port, function(r2,s2,id2){
+  var client1 = client1P.connect(port, function(r1,s1,id1,ip1){
+    assert.ok(!!ip1)
+    var client2 = client2P.connect(port, function(r2,s2,id2,ip2){
+      assert.ok(!!ip2)
       var p = plan(2,done)
       var iv = setInterval(function(){
         client2P.set('foo','bla')
