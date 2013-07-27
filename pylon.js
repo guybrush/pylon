@@ -118,6 +118,7 @@ pylon.prototype.listen = function(){
       s.send('pylon::ping')
     },self.config.ping.interval)
     debug('client connected',{id:id,ip:ip,clientCount:Object.keys(self.remotes).length})
+    s.data('pylon::getId',function(){s.send('pylon::id',id)})
     s.data('pylon::getInfo',function(){s.send('pylon::info',{id:id,ip:ip})})
     r.on('*',function(){
       var args = [].slice.call(arguments)
