@@ -1,8 +1,9 @@
 var pylon = require('../pylon')
-  , fs = require('fs')
-  , assert = require('assert')
-  , ME = module.exports
-  , debug = require('debug')('test')
+var fs = require('fs')
+var assert = require('assert')
+var ME = module.exports
+var debug = require('debug')('test')
+var destroyer = require('destroyer')
   
 function ee2log(name){return function(){
   debug((name || '☼')+':',this.event,'→',[].slice.call(arguments))
@@ -59,10 +60,73 @@ ME['reconnect'] = function(done){
   
   var P = plan(2,done)
   var cClient = c.connect(port,{reconnect:200},function(r,s,id){
-    cId=id
+    cId = id
     assert.equal(p.sockets.length,1)
     p.sockets[0].end()
     P.did()
   })
+}
+
+ME['stress'] = function(done) {
+  this.timeout(2000)
+  var port = ~~(Math.random()*50000)+10000
+  var serverPylon = pylon()
+  var server = pylon()
+  var pylons = []
+  var clients = []
+  var opts = {port:port,reconnect:20}
+  var watcher = pylon()
+  var len = 0
+  var keepTesting = true
+  
+  var nClients = 20
+  var tAll = 500
+  var tDiscClients = 20
+  var tRestartServer = 100
+   
+  watcher.connect(opts,function(r,s,id,ip){
+    len = 0
+    r.on('del',function(){--len; debug(len)})
+    r.on('set',function(){++len; debug(len)})
+    r.once('keys',function(a,b){len += b.length; debug(len)})
+    r.keys('.* .* name')
+  })
+  
+  startServer()
+  
+  for (var i=0; i<nClients; i++) startClient(i)
+  
+  var iv = setInterval(disconnectClients,tDiscClients)
+  
+  setTimeout(function(){
+    keepTesting = false
+    clearInterval(iv)
+    check()
+    function check() {
+      if (len == nClients) return done()
+      setTimeout(check,20)
+    }
+  },tAll)
+  
+  function startClient(i) {
+    pylons[i] = pylon()
+    pylons[i].set('name','client'+i)
+    clients[i] = pylons[i].connect(opts)
+  }
+  
+  function startServer() {
+    debug('startServer')
+    var server = serverPylon.listen(port)            
+    var destroy = destroyer(server)
+    server.on('listening',function(){setTimeout(function(){
+      if (!keepTesting) return
+      destroy()
+      startServer()
+    },tRestartServer)})
+  }
+  
+  function disconnectClients() {
+    if (serverPylon.sockets[0]) serverPylon.sockets[0].end()
+  }
 }
 

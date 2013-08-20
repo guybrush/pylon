@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 
 var pylon = require('../')
-  , opti = require('optimist')
-  , path = require('path')
-  , argv = opti.argv
-  , pkg = require('../package.json')
-  , AA = require('async-array')
-  , fs = require('fs')
-  , debug = require('debug')('pylon')
-  , help = {}
-  , cfg = {}
-  , server
+var opti = require('optimist')
+var path = require('path')
+var argv = opti.argv
+var pkg = require('../package.json')
+var fs = require('fs')
+var debug = require('debug')('pylon')
+var help = {}
+var cfg = {}
+var server
   
 // node@0.6.x compat
 fs.exists = fs.exists || path.exists

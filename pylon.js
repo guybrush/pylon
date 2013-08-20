@@ -4,7 +4,7 @@ var sv = require('socketvat')
 var debug = require('debug')('pylon')
 var fs = require('fs')
 var path = require('path')
-var _ = require('underscore')
+var _ = require('lodash')
 var home = ( process.platform === "win32" )
            ? process.env.USERPROFILE
            : process.env.HOME
